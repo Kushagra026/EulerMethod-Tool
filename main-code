@@ -1,0 +1,96 @@
+import numpy as np
+import re
+
+def euler_method(ode_func, y0, x0, x_end, h):
+    """
+    Solves the ODE using Euler's method.
+
+    Parameters:
+        ode_func (function): The function representing the ODE dy/dx = f(x, y).
+        y0 (float): Initial condition for y at x0.
+        x0 (float): Initial value of x.
+        x_end (float): End value of x.
+        h (float): Step size.
+
+    Returns:
+        x_values (numpy array): Array of x values.
+        y_values (numpy array): Array of y values corresponding to x_values.
+    """
+    steps = int((x_end - x0) / h)
+    
+    x_values = np.zeros(steps + 1)
+    y_values = np.zeros(steps + 1)
+    
+    x_values[0] = x0
+    y_values[0] = y0
+
+    for i in range(steps):
+        y_values[i + 1] = y_values[i] + h * ode_func(x_values[i], y_values[i])
+        x_values[i + 1] = x_values[i] + h
+
+    return x_values, y_values
+
+def parse_input(input_str):
+    """
+    Parse the input string to extract the ODE function, initial values, and step size.
+
+    Parameters:
+        input_str (str): The input string describing the ODE.
+
+    Returns:
+        func_str (str): The right-hand side of the ODE as a string.
+        y0 (float): Initial value for y.
+        h (float): Step size.
+    """
+    match = re.match(r"dy/dx\s*=\s*(.*?),\s*y\(0\)\s*=\s*(-?\d*\.?\d+),\s*h\s*=\s*(-?\d*\.?\d+)", input_str)
+    
+    if match:
+        func_str = match.group(1).strip()  # Capture the ODE expression
+        y0 = float(match.group(2).strip())  # Capture the initial value for y
+        h = float(match.group(3).strip())  # Capture the step size
+
+        return func_str, y0, h
+    else:
+        raise ValueError("Input format is incorrect. Please use the format: dy/dx = f(x, y), y(0) = y0, h = step_size")
+
+def main():
+    while True:
+        print("Enter the ODE in the format:")
+        print("dy/dx = f(x, y), y(0) = y0, h = step_size")
+        input_str = input("Input: ")
+
+        try:
+            # Parse the input string to extract the ODE function and parameters
+            func_str, y0, h = parse_input(input_str)
+
+            # Ask the user for the number of steps
+            num_steps = int(input("Enter the number of steps for the solution: "))
+            x0 = 0
+            x_end = x0 + num_steps * h
+
+            # Dynamically create the ODE function from the input string
+            # Replace '^' with '**' for exponentiation and use eval() to create the lambda function
+            ode_func = eval("lambda x, y: " + func_str.replace('^', '**'))
+
+            # Solve the ODE using Euler's method
+            x_values, y_values = euler_method(ode_func, y0, x0, x_end, h)
+
+            # Print the results in a nice format
+            print("\nResults using Euler's Method:")
+            print(f"{'Step':<5} {'x':<10} {'y':<10}")
+            print("-" * 30)
+            steps = len(x_values)
+            for i in range(steps):
+                print(f"{i:<5} {x_values[i]:<10.4f} {y_values[i]:<10.4f}")
+
+        except ValueError as e:
+            print("ERROR:", e)
+
+        retry = input("Do you want to solve another question? (1 for YES, 0 for NO): ")
+        if retry.strip() != '1':
+            print("Exiting the program.")
+            break
+
+# Run the main function
+if __name__ == "__main__":
+    main()
